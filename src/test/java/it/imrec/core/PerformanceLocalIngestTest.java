@@ -6,7 +6,7 @@ import it.imrec.worker.SingleThrededWorker;
 import it.imrec.worker.contract.Hasher;
 import it.imrec.worker.utlis.DhashCalculator;
 import org.junit.jupiter.api.Test;
-import org.springframework.test.context.event.annotation.BeforeTestClass;
+import org.junit.jupiter.api.BeforeAll;
 
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
@@ -14,19 +14,20 @@ import java.io.IOException;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.concurrent.Executors;
-import java.util.concurrent.ThreadPoolExecutor;
 
 public class PerformanceLocalIngestTest {
     private static ArrayList<BufferedImage> testData = new ArrayList<>();
     private static Hasher hasher = new DhashCalculator();
 
-    @BeforeTestClass
-    private static void loadTestImages() throws IOException {
+    @BeforeAll
+    public static void loadTestImages() throws IOException {
         var basePath = System.getProperty("user.dir");
         System.out.println(basePath);
         var testDataPath = "TestData/images";
         var dir = Paths.get(basePath, testDataPath).toFile();
+        //throw new RuntimeException(dir.getAbsolutePath());
         for(var file : dir.listFiles()) {
+            //System.out.println(file);
             testData.add(ImageIO.read(file));
         }
     }
@@ -85,6 +86,24 @@ public class PerformanceLocalIngestTest {
         testInjestorPerformance("Multi thread(4), eight workers", ingestor);
     }
 
+    @Test
+    public void testPerformanceMultiTwoThreadFourWorkers(){
+        var ingestor = new LocalBufferedImageIngestor(
+                Executors.newFixedThreadPool(4),
+                () -> new MultiThrededWorker(Executors.newFixedThreadPool(2), hasher)
+        );
+        testInjestorPerformance("Multi thread(2), four workers", ingestor);
+    }
+    @Test
+    public void testPerformanceMultiFourThreadTwoWorkers(){
+        var ingestor = new LocalBufferedImageIngestor(
+                Executors.newFixedThreadPool(2),
+                () -> new MultiThrededWorker(Executors.newFixedThreadPool(4), hasher)
+        );
+        testInjestorPerformance("Multi thread(4), two workers", ingestor);
+    }
+
+
     private void testInjestorPerformance(String title, LocalBufferedImageIngestor ingestor){
         // Warm up JVM
         ingestor.bulkIngestImages(testData);
@@ -94,17 +113,17 @@ public class PerformanceLocalIngestTest {
             var now = System.nanoTime();
             ingestor.bulkIngestImages(testData);
             var after = System.nanoTime();
-            timing[i] = after - now;
+            timing[i] = (after - now) / 1000;
         }
-        int best = Integer.MAX_VALUE - 1, worst = 0, sum = 0;
+        long best = Long.MAX_VALUE - 1, worst = 0, sum = 0;
         for(var t : timing){
-            best = Math.min(best, (int)t);
-            worst = Math.max(worst, (int)t);
-            sum += (int)t;
+            best = Math.min(best, t);
+            worst = Math.max(worst, t);
+            sum += t;
         }
         System.out.println(
                 String.format(
-                        "Test for %s:\n Best: %d ns;\n Worst: %d ns;\n Average: %d ns\n-----------------",
+                        "Test for %s:\n Best: %d ms;\n Worst: %d ms;\n Average: %d ms\n-----------------",
                         title,
                         best,
                         worst,
