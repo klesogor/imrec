@@ -1,17 +1,16 @@
 package it.imrec.worker;
 
 import it.imrec.core.data.ImageFeatures;
-import it.imrec.worker.contract.Hasher;
 import it.imrec.ingestor.contract.Worker;
+import it.imrec.worker.contract.Hasher;
 import it.imrec.worker.utlis.ImageRotator;
-import lombok.AllArgsConstructor;
-
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 import java.util.concurrent.ExecutionException;
+import lombok.AllArgsConstructor;
 
 @AllArgsConstructor
-public class SingleThrededWorker implements Worker {
+public class SingleThreadedWorker implements Worker {
     private Hasher hasher;
 
     @Override

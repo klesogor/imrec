@@ -1,19 +1,19 @@
 package it.imrec.core;
 
 import it.imrec.ingestor.LocalBufferedImageIngestor;
-import it.imrec.worker.MultiThrededWorker;
-import it.imrec.worker.SingleThrededWorker;
+import it.imrec.worker.MultiThreadedWorker;
+import it.imrec.worker.SingleThreadedWorker;
 import it.imrec.worker.contract.Hasher;
 import it.imrec.worker.utlis.DhashCalculator;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.BeforeAll;
-
-import javax.imageio.ImageIO;
+import it.imrec.worker.utlis.SparkDataTransformer;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.concurrent.Executors;
+import javax.imageio.ImageIO;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 
 public class PerformanceLocalIngestTest {
     private static ArrayList<BufferedImage> testData = new ArrayList<>();
@@ -36,7 +36,7 @@ public class PerformanceLocalIngestTest {
     public void testPerformanceSingleThreadOneWorker(){
         var ingestor = new LocalBufferedImageIngestor(
                 Executors.newFixedThreadPool(1),
-                () -> new SingleThrededWorker(hasher)
+                () -> new SingleThreadedWorker(hasher)
         );
         testInjestorPerformance("Single thread, single worker", ingestor);
     }
@@ -45,7 +45,7 @@ public class PerformanceLocalIngestTest {
     public void testPerformanceSingleThreadEightWorkers(){
         var ingestor = new LocalBufferedImageIngestor(
                 Executors.newFixedThreadPool(8),
-                () -> new SingleThrededWorker(hasher)
+                () -> new SingleThreadedWorker(hasher)
         );
         testInjestorPerformance("Single thread, 8 workers", ingestor);
     }
@@ -54,7 +54,7 @@ public class PerformanceLocalIngestTest {
     public void testPerformanceSingleThreadSixteenWorkers(){
         var ingestor = new LocalBufferedImageIngestor(
                 Executors.newFixedThreadPool(16),
-                () -> new SingleThrededWorker(hasher)
+                () -> new SingleThreadedWorker(hasher)
         );
         testInjestorPerformance("Single thread, 16 workers", ingestor);
     }
@@ -63,7 +63,7 @@ public class PerformanceLocalIngestTest {
     public void testPerformanceMultiThreadOneWorker(){
         var ingestor = new LocalBufferedImageIngestor(
                 Executors.newFixedThreadPool(1),
-                () -> new MultiThrededWorker(Executors.newFixedThreadPool(4), hasher)
+                () -> new MultiThreadedWorker(Executors.newFixedThreadPool(4), hasher)
         );
         testInjestorPerformance("Multi thread(4), one worker", ingestor);
     }
@@ -72,7 +72,7 @@ public class PerformanceLocalIngestTest {
     public void testPerformanceMultiThreadWithOneThreadAndOneWorker(){
         var ingestor = new LocalBufferedImageIngestor(
                 Executors.newFixedThreadPool(1),
-                () -> new MultiThrededWorker(Executors.newFixedThreadPool(1), hasher)
+                () -> new MultiThreadedWorker(Executors.newFixedThreadPool(1), hasher)
         );
         testInjestorPerformance("Multi thread(1), one worker", ingestor);
     }
@@ -81,7 +81,7 @@ public class PerformanceLocalIngestTest {
     public void testPerformanceMultiThreadEightWorkers(){
         var ingestor = new LocalBufferedImageIngestor(
                 Executors.newFixedThreadPool(8),
-                () -> new MultiThrededWorker(Executors.newFixedThreadPool(4), hasher)
+                () -> new MultiThreadedWorker(Executors.newFixedThreadPool(4), hasher)
         );
         testInjestorPerformance("Multi thread(4), eight workers", ingestor);
     }
@@ -90,7 +90,7 @@ public class PerformanceLocalIngestTest {
     public void testPerformanceMultiTwoThreadFourWorkers(){
         var ingestor = new LocalBufferedImageIngestor(
                 Executors.newFixedThreadPool(4),
-                () -> new MultiThrededWorker(Executors.newFixedThreadPool(2), hasher)
+                () -> new MultiThreadedWorker(Executors.newFixedThreadPool(2), hasher)
         );
         testInjestorPerformance("Multi thread(2), four workers", ingestor);
     }
@@ -98,11 +98,17 @@ public class PerformanceLocalIngestTest {
     public void testPerformanceMultiFourThreadTwoWorkers(){
         var ingestor = new LocalBufferedImageIngestor(
                 Executors.newFixedThreadPool(2),
-                () -> new MultiThrededWorker(Executors.newFixedThreadPool(4), hasher)
+                () -> new MultiThreadedWorker(Executors.newFixedThreadPool(4), hasher)
         );
         testInjestorPerformance("Multi thread(4), two workers", ingestor);
     }
 
+    @Test
+    public void shouldPrepareTheImageDataForHadoop() throws IOException {
+        var basePath = "file://" + System.getProperty("user.dir") + "/TestData";
+        var testDataPath = "/images";
+        SparkDataTransformer.prepareData(basePath, testDataPath);
+    }
 
     private void testInjestorPerformance(String title, LocalBufferedImageIngestor ingestor){
         // Warm up JVM
