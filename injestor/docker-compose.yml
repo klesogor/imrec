@@ -4,15 +4,18 @@ services:
   injestor:
     build: .
     ports:
-      - "8080:8080"
+      - 8080:8080
     volumes:
       - images:/imrec-images
     environment:
-      - spring_active_profiles=injestor
+      - SPRING_PROFILES_ACTIVE=injestor
+    depends_on:
+      - postgres
+      - queue
   queue:
     image: rabbitmq:3.9-management
     ports:
-      - "15762:15762"
+      - 15672:15672
     volumes:
       - queuev:/var/lib/rabbitmq
   worker:
@@ -20,16 +23,21 @@ services:
     volumes:
       - images:/imrec-images
     environment:
-      - spring_active_profiles=worker
+      - SPRING_PROFILES_ACTIVE=worker
+    depends_on:
+      - postgres
+      - queue
   postgres:
-    image: postgres
+    image: postgres:14
     restart: always
+    ports:
+      - 5432:5432
     environment:
       POSTGRES_PASSWORD: secret
       POSTGRES_DB: imrec
     volumes:
-      - db:/var/lib/postgresql/data
+      - dbv-imrec:/var/lib/postgresql/data
 volumes:
   images: {}
-  db: {}
+  dbv-imrec: {}
   queuev: {}

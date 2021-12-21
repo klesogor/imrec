@@ -19,5 +19,6 @@ public class ImageFeature {
     private UUID id;
     private long hash;
     @ManyToOne
+    @JoinColumn(name="image_id", nullable=false)
     private Image image;
 }

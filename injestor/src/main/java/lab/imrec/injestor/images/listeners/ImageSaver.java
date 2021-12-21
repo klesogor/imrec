@@ -37,15 +37,7 @@ public class ImageSaver {
     }
 
     private void processImage(RecognitionResult result){
-        var imageFeatures = result.getHashes()
-                .stream()
-                .map(hash -> ImageFeature.builder().hash(hash).build())
-                .collect(Collectors.toList());
-        var image = Image.builder()
-                .name(result.getName())
-                .reference(result.getLocalReference())
-                .features(imageFeatures)
-                .build();
+        var image = Image.fromFeatures(result.getName(), result.getLocalReference(), result.getHashes());
         this.repository.save(image);
     }
 }
