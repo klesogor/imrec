@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Imrec - Image lookup service</title>
+    <style>
+        body{
+            background: #eee;
+        }
+        .row{
+            display: flex;
+            margin-bottom: 20px;
+        }
+        .file-option{
+            cursor: pointer;
+            margin-right: 10px;
+            position: relative;
+            display: block;
+        }
+        #lookup-results > img{
+            position: relative;
+            display: block;
+            margin-bottom: 20px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+    </style>
+</head>
+<body>
+
+<h1>
+    Imrec
+</h1>
+<h2>
+    Step 1: Select your image
+</h2>
+<div class="image-inpu">
+    <input type="file" id="file" name="file" accept=".png, .jpg, .jpeg">
+</div>
+<h2>
+   Step 2: Choose what to do with your file
+</h2>
+<div class="row">
+    <div class="file-option">
+        <button role="button" onclick="uploadImage()">Add file to the database</button>
+    </div>
+    <div class="file-option">
+        <button id="lookup" onclick="lookupImage()" role="button">Search file in the database</button>
+    </div>
+</div>
+<div id="lookup-results">
+
+</div>
+
+</body>
+<script>
+    function extractImage(){
+        const image = document.getElementById("file")?.files?.[0]
+        if(!Boolean(image)){
+            throw new Error("Please, select image to process");
+        }
+        return image;
+    }
+    function prepareImageData(imageBlob){
+        const data = new FormData();
+        data.append('file', imageBlob);
+
+        return data;
+    }
+    async function uploadImage(){
+        try{
+            const data = prepareImageData(extractImage());
+            await fetch("/api/images", {method: 'POST', body: data});
+            alert("Uploaded image successfully!");
+        } catch(err){
+            alert(err.message)
+        }
+    }
+    async function lookupImage(){
+        try{
+            const data = prepareImageData(extractImage());
+            const lookupResults = await fetch("/api/images/lookup", {method: 'POST', body: data}).then(res => res.json());
+            renderResults(lookupResults);
+        } catch(err){
+            alert(err.message)
+        }
+    }
+
+    function renderResults(images){
+        const mount = document.getElementById("lookup-results");
+        while(mount.firstChild){
+            mount.removeChild(mount.firstChild);
+        }
+        for(const image of images){
+            const img = document.createElement('img');
+            img.src = `/api/images/${image.name}`;
+            img.alt = image.name;
+            mount.appendChild(img);
+         }
+    }
+</script>
+</html>

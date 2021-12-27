@@ -4,9 +4,9 @@ services:
   injestor:
     build: .
     ports:
-      - 8080:8080
+      - 80:8080
     volumes:
-      - images:/imrec-images
+      - images:/static/images
     environment:
       - SPRING_PROFILES_ACTIVE=injestor
     depends_on:
@@ -20,8 +20,8 @@ services:
       - queuev:/var/lib/rabbitmq
   worker:
     build: .
-    volumes:
-      - images:/imrec-images
+    volumes:  
+      - images:/static/images
     environment:
       - SPRING_PROFILES_ACTIVE=worker
     depends_on:

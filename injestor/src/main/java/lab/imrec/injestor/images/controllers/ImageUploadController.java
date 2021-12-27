@@ -6,6 +6,7 @@ import lab.imrec.injestor.images.dto.ImageLookupResult;
 import lab.imrec.injestor.images.service.ImageLookupService;
 import lab.imrec.injestor.images.service.ImageUploadService;
 import org.springframework.context.annotation.Profile;
+import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -45,5 +46,10 @@ public class ImageUploadController {
     @RequestMapping("/lookup")
     public List<ImageLookupResult> handleImageLookup(@RequestParam("file") MultipartFile file) throws IOException {
         return this.lookupService.searchImages(file.getBytes());
+    }
+
+    @GetMapping(value = "/{reference}", produces = MediaType.IMAGE_JPEG_VALUE)
+    public @ResponseBody byte[] handleViewImage(@PathVariable String reference){
+        return this.lookupService.getImage(reference);
     }
 }
